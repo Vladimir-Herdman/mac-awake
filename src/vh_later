@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+#The first argument should be the time at which to stop caffeinate
+
+usage() {
+    printf "%s" "USAGE: [OPTION]"
+    exit 0
+}
+
+turn_time_to_seconds() {
+    local time_val; time_val="$1"
+    local colon_location; colon_location="$2"
+    local answer; answer=$(((60**colon_location)*time_val))
+    printf "%s" "$answer"
+}
+
+sleep_for() {
+    local passed_time; passed_time="$1"
+    local passed_time_len; passed_time_len="${#passed_time}"
+    local colon_count; colon_count=0
+    local -a time_parameters_arr
+
+    local current_time_val; current_time_val=""
+    for (( i=0; i<"$passed_time_len"; i++ )); do
+        local ch; ch="${passed_time:$i:1}"
+        current_time_val+="$ch"
+
+        if [[ $ch == ':' ]]; then
+            time_parameters_arr["$colon_count"]="${current_time_val%:}" #take one character off end
+            current_time_val=""
+            ((++colon_count))
+        fi
+        if [[ $((i+1)) -eq "$passed_time_len" ]]; then
+            time_parameters_arr["$colon_count"]="$current_time_val"
+            current_time_val=""
+        fi
+    done
+
+    local seconds; seconds=0
+    for word in "${time_parameters_arr[@]}"; do
+        ((seconds+=$(turn_time_to_seconds "$word" "$colon_count")))
+        ((--colon_count))
+    done
+
+    caffeinate -t "$seconds"; sleep 10; pmset sleepnow
+}
+
+until_time() {
+    true;
+}
+
+main() {
+    if [[ "$#" -eq 0 ]]; then printf "%s\n" "No command line options passed"; exit 1; fi
+
+    local arg_count; arg_count=0
+    for arg in "$@"; do
+        ((++arg_count))
+        case "$arg" in 
+            --help | -h)
+                usage;;
+
+            --for | -f)
+                if [[ -z "$2" ]]; then printf "%s\n" "No value passed to given option"; exit 1; fi
+                sleep_for "$2";
+                exit 0;;
+
+            --until | -u) 
+                if [[ -z "$2" ]]; then printf "%s\n" "No value passed to given option"; exit 1; fi
+                until_time "$2"
+                exit 0;;
+
+            *) printf "%s\n" 'invalid command line option'; exit 1;;
+        esac
+    done
+}
+
+main "$@"

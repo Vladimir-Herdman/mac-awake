@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+INSTALL_DIR="$HOME/.local/bin"
+SCRIPT_NAME='vh_later'
+
+main() {
+    if [[ -d "$INSTALL_DIR" ]]; then
+        rm "$INSTALL_DIR/$SCRIPT_NAME"
+    fi
+}
+
+main
