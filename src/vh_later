@@ -3,11 +3,11 @@
 
 usage() {
     cat << USAGE_CAT
-Usage: vh_later [OPTIONS]
+Usage: vh_later [OPTIONS [VALUE]]
 
 Options:
   -h, --help                Show usage information for script
-  -f, --for TIME            Stay awake for TIME duration 
+  -f, --for TIME            Stay awake for TIME duration
   -u, --until DATE [TIME]   Stay awake until DATE and TIME occurrs (TIME optional)
 
 Value Explanations:
@@ -15,6 +15,15 @@ Value Explanations:
   TIME  Follows colon format, where time starts at lowest increment and increases
         with colons (i.e. '24' passed is 24 seconds, '1:24' passed is read as 1
         minute and 24 seconds, '1:1:24' is 1 hour, 1 minute, and 24 seconds...)
+
+        This means when used with a date, 'vh_later -u 2025-08-24 13:14:21' would
+        mean 'from the current time, stay awake until the date August 24th of 2025
+        and time 1:14:21 PM'
+
+        To simplify TIME and DATE usage and avoid conversions in the head leading
+        to mistakes, one can just type out the specific TIME when used with a DATE,
+        so while 'vh_later -u 2025-08-24 13:14:21' is valid, so too is
+        'vh_later -u 2025-08-24 1:14:21PM', or 'vh_later -u 2025-08-24 4:35:00AM'
 USAGE_CAT
     exit 0
 }
@@ -76,7 +85,11 @@ main() {
 
             --until | -u) 
                 if [[ -z "$2" ]]; then printf "%s\n" "No value passed to given option"; exit 1; fi
-                until_time "$2"
+                if [[ -n "$3" ]]; then
+                    until_time "$2" "$3"
+                else
+                    until_time "$2"
+                fi
                 exit 0;;
 
             *) printf "%s\n" 'invalid command line option'; exit 1;;
