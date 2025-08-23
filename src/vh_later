@@ -2,7 +2,20 @@
 #The first argument should be the time at which to stop caffeinate
 
 usage() {
-    printf "%s" "USAGE: [OPTION]"
+    cat << USAGE_CAT
+Usage: vh_later [OPTIONS]
+
+Options:
+  -h, --help                Show usage information for script
+  -f, --for TIME            Stay awake for TIME duration 
+  -u, --until DATE [TIME]   Stay awake until DATE and TIME occurrs (TIME optional)
+
+Value Explanations:
+  DATE  Follows YYYY-MM-DD format, or YYYY/MM/DD
+  TIME  Follows colon format, where time starts at lowest increment and increases
+        with colons (i.e. '24' passed is 24 seconds, '1:24' passed is read as 1
+        minute and 24 seconds, '1:1:24' is 1 hour, 1 minute, and 24 seconds...)
+USAGE_CAT
     exit 0
 }
 
@@ -51,9 +64,7 @@ until_time() {
 main() {
     if [[ "$#" -eq 0 ]]; then printf "%s\n" "No command line options passed"; exit 1; fi
 
-    local arg_count; arg_count=0
     for arg in "$@"; do
-        ((++arg_count))
         case "$arg" in 
             --help | -h)
                 usage;;
