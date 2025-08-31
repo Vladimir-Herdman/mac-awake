@@ -2,9 +2,7 @@
 # This script is intended for a UNIX based system.  If you're raw windows, consider
 # WSL, or figure it out.
 
-INSTALL_DIR="$HOME/.local/bin"
-PROJECT_NAME='mac-sleep'
-SCRIPT_NAME='vh_later'
+source "$(dirname "$0")/globals"
 
 get_root_dir_path() {
     local root_dir; root_dir=$(pwd)
@@ -26,23 +24,23 @@ main() {
     cd "$root_dir" || exit 1
 
     local cur_script_path; cur_script_path="$root_dir/src/$SCRIPT_NAME"
-    printf "%s\n" "  Copying script to installation directory at: $INSTALL_DIR/$SCRIPT_NAME"
+    printf "%s\n" "  * Copying script to installation directory at: $INSTALL_DIR/$SCRIPT_NAME"
     cp -f "$cur_script_path" "$INSTALL_DIR/$SCRIPT_NAME"
 
     if [[ ":$PATH:" == *":$INSTALL_DIR:"* ]]; then
-        printf "%s\n" "  You may now call '$SCRIPT_NAME' to use this script"
+        printf "%s\n" "  * You may now call '$SCRIPT_NAME' to use this script (open new terminal or source)"
     else
         local current_shell; current_shell="$SHELL"
         if [[ "$current_shell" == *'zsh'* ]]; then
-            printf "%s\n" "  Adding path export to shell configuration file: $HOME/.zshrc"
+            printf "%s\n" "  * Adding path export to shell configuration file: $HOME/.zshrc"
             printf "%s%s" 'export PATH=$PATH:' "$INSTALL_DIR" >> "$HOME/.zshrc"
-            printf "%s\n" "  You may now call '$SCRIPT_NAME' to use this script, but open a new shell instance first"
+            printf "%s\n" "  * You may now call '$SCRIPT_NAME' to use this script, but open a new shell instance first"
         elif [[ "$current_shell" == *'bash'* ]]; then
-            printf "%s\n" "  Adding path export to shell configuration file: $HOME/.bashrc"
+            printf "%s\n" "  * Adding path export to shell configuration file: $HOME/.bashrc"
             printf "%s%s" 'export PATH=$PATH:' "$INSTALL_DIR" >> "$HOME/.bashrc"
-            printf "%s\n" "  You may now call '$SCRIPT_NAME' to use this script, but open a new shell instance first"
+            printf "%s\n" "  * You may now call '$SCRIPT_NAME' to use this script, but open a new shell instance first"
         else
-            printf "%s\n" "  Add '$INSTALL_DIR' directory to shell PATH in order to use script"
+            printf "%s\n" "  * Add '$INSTALL_DIR' directory to shell PATH in order to use script"
         fi
     fi
 }

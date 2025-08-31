@@ -63,10 +63,20 @@ sleep_for() {
         ((--colon_count))
     done
 
-    caffeinate -t "$seconds"; sleep 10; pmset sleepnow
+    printf "sleeping for %s seconds" "$seconds"
+    if [[ $((seconds/60)) -ne 0 ]]; then
+        printf " (about %s minutes and %s seconds)\n" "$((seconds/60))" "$((seconds%60))"
+    else
+        printf "\n"
+    fi
+
+    caffeinate -t "$seconds"
+    sleep 0.5
+    pmset sleepnow
 }
 
 until_time() {
+    #TODO: Look to usage (-h | --help) TIME value explanation for overall idea of this one - (LINE 15)
     true;
 }
 
