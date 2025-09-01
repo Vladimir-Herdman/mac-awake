@@ -13,19 +13,24 @@ get_root_dir_path() {
 }
 
 main() {
-    if [[ -d "$INSTALL_DIR" ]]; then
-        true;
-    else
+    if [[ ! -d "$INSTALL_DIR" ]]; then
         printf "%s\n" "  Creating directory to store script locally at: $INSTALL_DIR"
         mkdir -p "$INSTALL_DIR"
+    fi
+    if [[ ! -d "$MAN_DIR" ]]; then
+        printf "%s\n" "  Creating directory to store script man page locally at: $MAN_DIR"
+        mkdir -p "$MAN_DIR"
     fi
 
     local root_dir; root_dir="$(get_root_dir_path)"
     cd "$root_dir" || exit 1
 
     local cur_script_path; cur_script_path="$root_dir/src/$SCRIPT_NAME"
+    local cur_man_path; cur_man_path="$root_dir/src/$MAN_NAME"
     printf "%s\n" "  * Copying script to installation directory at: $INSTALL_DIR/$SCRIPT_NAME"
+    printf "%s\n" "  * Copying man page to man directory at: $MAN_DIR/$MAN_NAME"
     cp -f "$cur_script_path" "$INSTALL_DIR/$SCRIPT_NAME"
+    cp -f "$cur_man_path" "$MAN_DIR/$MAN_NAME"
 
     if [[ ":$PATH:" == *":$INSTALL_DIR:"* ]]; then
         printf "%s\n" "  * You may now call '$SCRIPT_NAME' to use this script (open new terminal or source)"
@@ -34,10 +39,12 @@ main() {
         if [[ "$current_shell" == *'zsh'* ]]; then
             printf "%s\n" "  * Adding path export to shell configuration file: $HOME/.zshrc"
             printf "%s%s" 'export PATH=$PATH:' "$INSTALL_DIR" >> "$HOME/.zshrc"
+            printf "%s%s" 'export PATH=$PATH:' "$HOME/.local/share/man" >> "$HOME/.zshrc"
             printf "%s\n" "  * You may now call '$SCRIPT_NAME' to use this script, but open a new shell instance first"
         elif [[ "$current_shell" == *'bash'* ]]; then
             printf "%s\n" "  * Adding path export to shell configuration file: $HOME/.bashrc"
             printf "%s%s" 'export PATH=$PATH:' "$INSTALL_DIR" >> "$HOME/.bashrc"
+            printf "%s%s" 'export PATH=$PATH:' "$HOME/.local/share/man" >> "$HOME/.bashrc"
             printf "%s\n" "  * You may now call '$SCRIPT_NAME' to use this script, but open a new shell instance first"
         else
             printf "%s\n" "  * Add '$INSTALL_DIR' directory to shell PATH in order to use script"

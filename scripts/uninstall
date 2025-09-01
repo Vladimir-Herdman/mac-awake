@@ -6,6 +6,9 @@ main() {
     if [[ -d "$INSTALL_DIR" ]]; then
         rm "$INSTALL_DIR/$SCRIPT_NAME"
     fi
+    if [[ -d "$MAN_DIR" ]]; then
+        rm "$MAN_DIR/$MAN_NAME"
+    fi
 }
 
 main

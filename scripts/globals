@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
-INSTALL_DIR="$HOME/.local/bin"
 PROJECT_NAME='mac-later'
+
+INSTALL_DIR="$HOME/.local/bin"
 SCRIPT_NAME='vh_later'
+
+MAN_DIR="$HOME/.local/share/man/man1"
+MAN_NAME="$SCRIPT_NAME.1"
