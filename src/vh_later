@@ -88,16 +88,15 @@ clean_time() {
         time="${time//am/}"
     fi
 
-    #normalize time format into military style, count ':' occurrences
-    local colon_count="${time//:/}"; colon_count="$(( ${#time} - ${#colon_count} ))"
-    local time_len="${#time}"
-
-    local h m s; IFS=":" read -r h m s <<< "$time"
+    #break apart time sections and normalize
+    local h m s; IFS=':' read -r h m s <<< "$time"
+    if [[ "$time_pmam" = 'pm' && "$h" != '12' ]]; then h="$(( h + 12 ))"; fi
     m="${m:-0}" #if no value provided, just be 0
     s="${s:-0}"
 
-    if [[ "$time_pmam" = 'pm' && "$h" != '12' ]]; then h="$(( h + 12 ))"; fi
-
+    #confirm length before continuing
+    local colon_count="${time//:/}"; colon_count="$(( ${#time} - ${#colon_count} ))"
+    local time_len="${#time}"
     case "$colon_count" in
         0) #1pm, 12pm, 8am
             if [[ "$time_len" -gt 2 ]]; then return 1; fi;;
@@ -146,7 +145,7 @@ clean_date() {
     printf "%s" "$date"
 }
 until_time() {
-    #TODO: Look to usage (-h | --help) TIME value explanation for overall idea of this one - (LINE 15)
+    #clean passed values
     local passed_time; if ! passed_time="$(clean_time "$1")"; then
         improper_time; exit 1
     fi
@@ -154,24 +153,26 @@ until_time() {
         improper_date; exit 1;
     fi
 
+    #get current date time for calculations
     local cur_date; cur_date="$(date +"%Y-%m-%d")" #2025-08-31
     local cur_time; cur_time="$(date +"%H:%M:%S")" #18:42:20 for 6:42PM (military time)
-
     if [[ -z "$passed_date" ]]; then passed_date="$cur_date"; fi
 
-    #TODO:
-        #here, we have standardized date and times for what was passed, and what it is currently
-        #calculate now the differenc in time, get it in seconds, and then caffeinate sleep
+    #get difference in seconds between passed time and now
+    local cur_ts passed_ts
+    cur_ts=$(date -j -f "%Y-%m-%d %H:%M:%S" "$cur_date $cur_time" +"%s")
+    passed_ts=$(date -j -f "%Y-%m-%d %H:%M:%S" "$passed_date $passed_time" +"%s")
+    local dif_seconds="$(( passed_ts - cur_ts ))"
 
-    #printf "sleeping until %s %s" "$passed_date" "$passed_time"
-    #if [[ $((seconds/60)) -ne 0 ]]; then
-    #    printf " (about %s minutes and %s seconds)\n" "$((seconds/60))" "$((seconds%60))"
-    #else
-    #    printf " (about %s seconds)\n" "$seconds"
-    #fi
-    #caffeinate -t "$seconds"
-    #sleep 0.5
-    #pmset sleepnow
+    printf "sleeping until %s %s" "$passed_date" "$passed_time"
+    if [[ $((dif_seconds/60)) -ne 0 ]]; then
+        printf " (about %s minutes and %s seconds)\n" "$((dif_seconds/60))" "$((dif_seconds%60))"
+    else
+        printf " (about %s seconds)\n" "$dif_seconds"
+    fi
+    caffeinate -t "$dif_seconds"
+    sleep 0.5
+    pmset sleepnow
 }
 
 main() {
