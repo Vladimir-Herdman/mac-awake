@@ -75,19 +75,54 @@ sleep_for() {
     pmset sleepnow
 }
 
+improper_time(){
+    printf "%s\n" "Improper TIME format given, should be for example 1pm, 1:30am, 14:39:12, 3:42:00pm"
+}
 clean_time() {
     local time="$1"
+    local time_pmam="${time: -2}"; time_pmam="${time_pmam,,}" #last two; make lowercase
 
-    if [[ -z "$time" ]]; then return; fi
+    #clean out time given
+    if [[ "$time_pmam" = "am" || "$time_pmam" = "pm" ]]; then
+        time="${time//pm/}"
+        time="${time//am/}"
+    fi
+
+    #normalize time format into military style, count ':' occurrences
+    local colon_count="${time//:/}"; colon_count="$(( ${#time} - ${#colon_count} ))"
+    local time_len="${#time}"
+    case "$colon_count" in
+        0) #1pm, 12pm, 8am
+            if [[ "$time_len" -gt 2 ]]; then return 1; fi
+            if [[ "$time_pmam" = 'pm' && "$time" != '12' ]]; then time="$(( time + 12 ))"; fi
+            time="$(printf "%02d:00:00" "$time")"
+            ;;
+        1) #1:20, 12:30pm, 8:21am
+            local h m; IFS=':' read -r h m <<< "$time"
+            if [[ "$time_len" -gt 5 ]]; then return 1; fi
+            if [[ "$time_pmam" = 'pm' && "$h" != '12' ]]; then h="$(( h + 12 ))"; fi
+            time="$(printf "%02d:%02d:00" "$h" "$m")" 
+            ;;
+        2) #1:0:0, 1:00:00, 12:34:4, 8:41:23pm
+            local h m s; IFS=':' read -r h m s <<< "$time"
+            if [[ "$time_len" -gt 8 ]]; then return 1; fi
+            if [[ "$time_pmam" = 'pm' && "$h" != '12' ]]; then h="$(( h + 12 ))"; fi
+            time="$(printf "%02d:%02d:%02d" "$h" "$m" "$s")" 
+            ;;
+        *) return 1;;
+    esac
 
     printf "%s" "$time"
+}
+improper_date() {
+    printf "%s" "Not a valid date format, should be YYYY-MM-DD, MM-DD-YYYY, or DD-MM-YYYY"
 }
 clean_date() {
     local date="$1"
 
     #basic cleaning
-    if [[ -z "$date" ]]; then return; fi
-    if [[ "$date" = */* ]]; then date="$(printf "%s" "$date" | sed "s/\//-/g")"; fi
+    if [[ -z "$date" ]]; then return 0; fi
+    date=${date//\//-} #parameter expansion -> substitute / with -
 
     #fill with 0's if single num
     local val1 val2 val3 ;IFS="-" read -r val1 val2 val3 <<< "$date"
@@ -105,33 +140,39 @@ clean_date() {
     elif date -j -f "%d-%m-%Y" "$date" >/dev/null 2>&1; then
         date="$(date -j -f "%d-%m-%Y" "$date" +"%Y-%m-%d")"
     else
-        printf "%s" "Not a valid date format, should be YYYY-MM-DD, MM-DD-YYYY, or DD-MM-YYYY"
-        exit 1
+        return 1
     fi
 
     printf "%s" "$date"
 }
 until_time() {
     #TODO: Look to usage (-h | --help) TIME value explanation for overall idea of this one - (LINE 15)
-    local passed_time; passed_time="$(clean_time "$1")"
-    local passed_date; passed_date="$(clean_date "$2")"
-    echo "$passed_date"
+    local passed_time; if ! passed_time="$(clean_time "$1")"; then
+        improper_time; exit 1
+    fi
+    echo "$passed_time"; exit
+    local passed_date; if ! passed_date="$(clean_date "$2")"; then
+        improper_date; exit 1;
+    fi
 
     local cur_date; cur_date="$(date +"%Y-%m-%d")" #2025-08-31
     local cur_time; cur_time="$(date +"%H:%M:%S")" #18:42:20 for 6:42PM (military time)
 
-    if [[ -n "$passed_time" ]]; then
-        if [[ -n "$passed_date" ]]; then
-            #date and time passed
-            true
-        else
-            #just time passed
-            true
-        fi
-    fi
+    if [[ -z "$passed_date" ]]; then passed_date="$cur_date"; fi
 
-    #local cur_date=
-    #local cur_time=
+    #TODO:
+        #here, we have standardized date and times for what was passed, and what it is currently
+        #calculate now the differenc in time, get it in seconds, and then caffeinate sleep
+
+    #printf "sleeping until %s %s" "$passed_date" "$passed_time"
+    #if [[ $((seconds/60)) -ne 0 ]]; then
+    #    printf " (about %s minutes and %s seconds)\n" "$((seconds/60))" "$((seconds%60))"
+    #else
+    #    printf " (about %s seconds)\n" "$seconds"
+    #fi
+    #caffeinate -t "$seconds"
+    #sleep 0.5
+    #pmset sleepnow
 }
 
 main() {
