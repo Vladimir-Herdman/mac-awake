@@ -8,10 +8,10 @@ Usage: vh_later [OPTIONS [VALUE]]
 Options:
   -h, --help                Show usage information for script
   -f, --for TIME            Stay awake for TIME duration
-  -u, --until DATE [TIME]   Stay awake until DATE and TIME occurrs (TIME optional)
+  -u, --until TIME [DATE]   Stay awake until TIME and DATE occurrs (DATE optional)
 
 Value Explanations:
-  DATE  Follows YYYY-MM-DD format, or YYYY/MM/DD
+  DATE  Follows YYYY-MM-DD, MM-DD-YYYY, or DD-MM-YYYY format (can use '/' instead of '-')
   TIME  Follows colon format, where time starts at lowest increment and increases
         with colons (i.e. '24' passed is 24 seconds, '1:24' passed is read as 1
         minute and 24 seconds, '1:1:24' is 1 hour, 1 minute, and 24 seconds...)
@@ -75,9 +75,63 @@ sleep_for() {
     pmset sleepnow
 }
 
+clean_time() {
+    local time="$1"
+
+    if [[ -z "$time" ]]; then return; fi
+
+    printf "%s" "$time"
+}
+clean_date() {
+    local date="$1"
+
+    #basic cleaning
+    if [[ -z "$date" ]]; then return; fi
+    if [[ "$date" = */* ]]; then date="$(printf "%s" "$date" | sed "s/\//-/g")"; fi
+
+    #fill with 0's if single num
+    local val1 val2 val3 ;IFS="-" read -r val1 val2 val3 <<< "$date"
+    for i in val1 val2 val3; do
+        local ival="${!i}"
+        if [[ "${#ival}" -eq 1 ]]; then printf -v "$i" "%02d" "$ival"; fi
+    done
+    date="$val1-$val2-$val3"
+
+    #confirm form YYYY-MM-DD
+    if date -j -f "%Y-%m-%d" "$date" >/dev/null 2>&1; then
+        true
+    elif date -j -f "%m-%d-%Y" "$date" >/dev/null 2>&1; then
+        date="$(date -j -f "%m-%d-%Y" "$date" +"%Y-%m-%d")"
+    elif date -j -f "%d-%m-%Y" "$date" >/dev/null 2>&1; then
+        date="$(date -j -f "%d-%m-%Y" "$date" +"%Y-%m-%d")"
+    else
+        printf "%s" "Not a valid date format, should be YYYY-MM-DD, MM-DD-YYYY, or DD-MM-YYYY"
+        exit 1
+    fi
+
+    printf "%s" "$date"
+}
 until_time() {
     #TODO: Look to usage (-h | --help) TIME value explanation for overall idea of this one - (LINE 15)
-    true;
+    local passed_time; passed_time="$(clean_time "$1")"
+    local passed_date; passed_date="$(clean_date "$2")"
+    echo "$passed_date"
+
+    local cur_date; cur_date="$(date +"%Y-%m-%d")" #2025-08-31
+    local cur_time; cur_time="$(date +"%H:%M:%S")" #18:42:20 for 6:42PM (military time)
+
+    if [[ -n "$passed_time" ]]; then
+        if [[ -n "$passed_date" ]]; then
+            #date and time passed
+            true
+        else
+            #just time passed
+            true
+        fi
+    fi
+
+    #local cur_date=
+    #local cur_time=
 }
 
 main() {
@@ -94,12 +148,8 @@ main() {
                 exit 0;;
 
             --until | -u) 
-                if [[ -z "$2" ]]; then printf "%s\n" "No value passed to given option"; exit 1; fi
-                if [[ -n "$3" ]]; then
-                    until_time "$2" "$3"
-                else
-                    until_time "$2"
-                fi
+                if [[ -z "$2" ]]; then printf "%s\n" "No values passed to given option"; exit 1; fi
+                until_time "$2" "$3"
                 exit 0;;
 
             *) printf "%s\n" 'invalid command line option'; exit 1;;
