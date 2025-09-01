@@ -92,12 +92,9 @@ clean_time() {
     local colon_count="${time//:/}"; colon_count="$(( ${#time} - ${#colon_count} ))"
     local time_len="${#time}"
 
-    local -a time_arr; IFS=":" read -ra time_arr <<< "$time"
-
-    local h m s
-    h="${time_arr[0]}"
-    m="${time_arr[1]:-0}" #if no value provided, just be 0
-    s="${time_arr[2]:-0}"
+    local h m s; IFS=":" read -r h m s <<< "$time"
+    m="${m:-0}" #if no value provided, just be 0
+    s="${s:-0}"
 
     if [[ "$time_pmam" = 'pm' && "$h" != '12' ]]; then h="$(( h + 12 ))"; fi
 
@@ -114,8 +111,8 @@ clean_time() {
         *) return 1;;
     esac
 
-    time="$(printf "%02d:%02d:%02d" "$h" "$m" "$s")" 
-    printf "%s" "$time"
+    #return normalized time
+    printf "%02d:%02d:%02d" "$h" "$m" "$s" 
 }
 improper_date() {
     printf "%s" "Not a valid date format, should be YYYY-MM-DD, MM-DD-YYYY, or DD-MM-YYYY"
@@ -153,7 +150,6 @@ until_time() {
     local passed_time; if ! passed_time="$(clean_time "$1")"; then
         improper_time; exit 1
     fi
-    echo "$passed_time"; exit
     local passed_date; if ! passed_date="$(clean_date "$2")"; then
         improper_date; exit 1;
     fi
