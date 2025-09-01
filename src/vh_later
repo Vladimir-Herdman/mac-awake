@@ -91,27 +91,30 @@ clean_time() {
     #normalize time format into military style, count ':' occurrences
     local colon_count="${time//:/}"; colon_count="$(( ${#time} - ${#colon_count} ))"
     local time_len="${#time}"
+
+    local -a time_arr; IFS=":" read -ra time_arr <<< "$time"
+
+    local h m s
+    h="${time_arr[0]}"
+    m="${time_arr[1]:-0}" #if no value provided, just be 0
+    s="${time_arr[2]:-0}"
+
+    if [[ "$time_pmam" = 'pm' && "$h" != '12' ]]; then h="$(( h + 12 ))"; fi
+
     case "$colon_count" in
         0) #1pm, 12pm, 8am
-            if [[ "$time_len" -gt 2 ]]; then return 1; fi
-            if [[ "$time_pmam" = 'pm' && "$time" != '12' ]]; then time="$(( time + 12 ))"; fi
-            time="$(printf "%02d:00:00" "$time")"
-            ;;
+            if [[ "$time_len" -gt 2 ]]; then return 1; fi;;
+
         1) #1:20, 12:30pm, 8:21am
-            local h m; IFS=':' read -r h m <<< "$time"
-            if [[ "$time_len" -gt 5 ]]; then return 1; fi
-            if [[ "$time_pmam" = 'pm' && "$h" != '12' ]]; then h="$(( h + 12 ))"; fi
-            time="$(printf "%02d:%02d:00" "$h" "$m")" 
-            ;;
+            if [[ "$time_len" -gt 5 ]]; then return 1; fi;;
+
         2) #1:0:0, 1:00:00, 12:34:4, 8:41:23pm
-            local h m s; IFS=':' read -r h m s <<< "$time"
-            if [[ "$time_len" -gt 8 ]]; then return 1; fi
-            if [[ "$time_pmam" = 'pm' && "$h" != '12' ]]; then h="$(( h + 12 ))"; fi
-            time="$(printf "%02d:%02d:%02d" "$h" "$m" "$s")" 
-            ;;
+            if [[ "$time_len" -gt 8 ]]; then return 1; fi;;
+
         *) return 1;;
     esac
 
+    time="$(printf "%02d:%02d:%02d" "$h" "$m" "$s")" 
     printf "%s" "$time"
 }
 improper_date() {
