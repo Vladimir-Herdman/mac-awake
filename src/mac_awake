@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-#The first argument should be the time at which to stop caffeinate
 
 #globals
 TURN_OFF_DISPLAY=false
