@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 #The first argument should be the time at which to stop caffeinate
 
+#globals
+TURN_OFF_DISPLAY=false
+SLEEP_AFTER=false
+
 usage() {
     cat << USAGE_CAT
 Usage: vh_later [OPTIONS [VALUE]]
@@ -25,7 +29,6 @@ Value Explanations:
         so while 'vh_later -u 2025-08-24 13:14:21' is valid, so too is
         'vh_later -u 2025-08-24 1:14:21PM', or 'vh_later -u 2025-08-24 4:35:00AM'
 USAGE_CAT
-    exit 0
 }
 
 turn_time_to_seconds() {
@@ -63,16 +66,17 @@ sleep_for() {
         ((--colon_count))
     done
 
-    printf "sleeping for %s seconds" "$seconds"
+    printf "awake for %s seconds" "$seconds"
     if [[ $((seconds/60)) -ne 0 ]]; then
         printf " (about %s minutes and %s seconds)\n" "$((seconds/60))" "$((seconds%60))"
     else
         printf "\n"
     fi
 
+    if [[ "$TURN_OFF_DISPLAY" = true ]]; then pmset displaysleepnow; fi
     caffeinate -t "$seconds"
     sleep 0.5
-    pmset sleepnow
+    if [[ "$SLEEP_AFTER" = true ]]; then pmset sleepnow; fi
 }
 
 improper_time(){
@@ -124,12 +128,8 @@ clean_date() {
     date=${date//\//-} #parameter expansion -> substitute / with -
 
     #fill with 0's if single num
-    local val1 val2 val3 ;IFS="-" read -r val1 val2 val3 <<< "$date"
-    for i in val1 val2 val3; do
-        local ival="${!i}"
-        if [[ "${#ival}" -eq 1 ]]; then printf -v "$i" "%02d" "$ival"; fi
-    done
-    date="$val1-$val2-$val3"
+    local y m d ;IFS="-" read -r y m d <<< "$date"
+    date="$(printf "%02d-%02d-%02d" "$y" "$m" "$d")"
 
     #confirm form YYYY-MM-DD
     if date -j -f "%Y-%m-%d" "$date" >/dev/null 2>&1; then
@@ -164,7 +164,8 @@ until_time() {
     passed_ts=$(date -j -f "%Y-%m-%d %H:%M:%S" "$passed_date $passed_time" +"%s")
     local dif_seconds="$(( passed_ts - cur_ts ))"
 
-    printf "sleeping until %s %s" "$passed_date" "$passed_time"
+    if [[ "$TURN_OFF_DISPLAY" = true ]]; then pmset displaysleepnow; fi
+    printf "awake until %s %s" "$passed_date" "$passed_time"
     if [[ $((dif_seconds/60)) -ne 0 ]]; then
         printf " (about %s minutes and %s seconds)\n" "$((dif_seconds/60))" "$((dif_seconds%60))"
     else
@@ -172,25 +173,50 @@ until_time() {
     fi
     caffeinate -t "$dif_seconds"
     sleep 0.5
-    pmset sleepnow
+    if [[ "$SLEEP_AFTER" = true ]]; then pmset sleepnow; fi
 }
 
 main() {
     if [[ "$#" -eq 0 ]]; then printf "%s\n" "No command line options passed"; exit 1; fi
 
+    #check options first to see if globals change
     for arg in "$@"; do
+        case "$arg" in
+            --displayoff | -d)
+                TURN_OFF_DISPLAY=true
+                ;;
+
+            --sleepafter | -s)
+                SLEEP_AFTER=true
+                ;;
+
+            *) ;;
+        esac
+    done
+
+    #main loop usage for options
+    local count=0
+    for arg in "$@"; do
+        ((++count))
         case "$arg" in 
             --help | -h)
-                usage;;
+                usage
+                exit 0;;
+
+            --displayoff | -d)
+                ;;
 
             --for | -f)
-                if [[ -z "$2" ]]; then printf "%s\n" "No value passed to given option"; exit 1; fi
-                sleep_for "$2";
+                local arg_after=$((count+1)); arg_after="${!arg_after}"
+                if [[ -z "$arg_after" ]]; then printf "%s\n" "No value passed to given option"; exit 1; fi
+                sleep_for "$arg_after";
                 exit 0;;
 
             --until | -u) 
-                if [[ -z "$2" ]]; then printf "%s\n" "No values passed to given option"; exit 1; fi
-                until_time "$2" "$3"
+                local arg_after=$((count+1)); arg_after="${!arg_after}"
+                local arg_even_after=$((count+2)); arg_even_after="${!arg_even_after}"
+                if [[ -z "$arg_after" ]]; then printf "%s\n" "No values passed to given option"; exit 1; fi
+                until_time "$arg_after" "$arg_even_after"
                 exit 0;;
 
             *) printf "%s\n" 'invalid command line option'; exit 1;;

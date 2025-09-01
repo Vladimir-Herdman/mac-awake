@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-PROJECT_NAME='mac-later'
+PROJECT_NAME='mac-awake'
 
 INSTALL_DIR="$HOME/.local/bin"
-SCRIPT_NAME='vh_later'
+SCRIPT_NAME='vh_awake'
 
 MAN_DIR="$HOME/.local/share/man/man1"
 MAN_NAME="$SCRIPT_NAME.1"

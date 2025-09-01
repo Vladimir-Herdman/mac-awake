@@ -1,0 +1,73 @@
+.TH MAC_AWAKE 1 "2025-09-01" "mac_awake 1.0.0"
+.SH NAME
+\fBmac_awake\fR \- apple mac awake utility
+.SH SYNOPSIS
+.I mac_awake
+[\fB\-h\fR|\fB\-\-help\fR]
+[\fB\-d\fR|\fB\-\-displayoff\fR]
+[\fB\-s\fR|\fB\-\-sleepafter\fR]
+[\fB\-f\fR|\fB\-\-for\fR <\fITIME\fR>]
+[\fB\-u\fR|\fB\-\-until\fR <\fITIME\fR> <\fIDATE\fR>]
+.SH DESCRIPTION
+.B mac_awake
+takes a given \fIoption\fR such as \fI\-f\fR or \fI\-u\fR along with a \fITIME\fR
+and optional \fIDATE\fR to then keep your mac awake and connected to network
+capabilities for that time.
+
+Closing your laptop while running this command WILL NOT keep the command running.
+.SH OPTIONS
+.TP
+.BR \-h ", " \-\-help
+Displays help information on pace usage.
+.TP
+.BR \-d ", " \-\-displayoff
+Immediately turns off display. Computer still awake and connected to network,
+good energy saver if leaving for long period.
+.TP
+.BR \-s ", " \-\-sleepafter
+Once awake period is finished, immediately put computer into sleep mode.
+.TP
+.BR \-f ", " \-\-for " \fITIME\fR"
+Stay awake for a given time following \fITIME\fR rules.
+.TP
+.BR \-u ", " \-\-until " \fITIME\fR [\fIDATE\fR]"
+Stay awake until a specified \fITIME\fR and optional \fIDATE\fR comes to
+pass.
+.SH OPTION VALUES
+.TP
+.BR TIME
+Follows colon format, where time starts at lowest increment and increases
+with colons (i.e. '24' passed is 24 seconds, '1:24' passed is read as 1
+minute and 24 seconds, '1:1:24' is 1 hour, 1 minute, and 24 seconds...)
+
+When using the \fB\-u\fR option, you can specify TIME in military time, or
+for ease of use, append \fIPM\fR or \fIAM\fR to the end of the time, which'll
+convert for you, so '3:45pm' will just convert correctly to 05:45:00.
+.TP
+.BR DATE
+Follows YYYY-MM-DD, MM-DD-YYYY, or DD-MM-YYYY format (can use '/' instead of '-').
+Valid examples would be 2004/11/24, 8/15/2027, 28-9-2025, ...
+.SH EXAMPLES
+.TP
+Stay awake until 1:14pm on August 24th:
+
+\fImac_awake -u 13:14:21 2025-08-24
+.TP
+Stay awake for 2 hours, 15 minutes, and 10 seconds
+
+\fImac_awake -f 2:15:10
+.TP
+Stay awake for 20 minutes, but immediately dim the screen on command start,
+and enter sleep mode once finished:
+
+\fImac_awake -d -s -f 20:0
+.TP
+It's 3:14pm, stay awake until 3:30pm, then sleep on finish:
+
+\fImac_awake -s -u 3:30pm
+.TP
+Same as just above, but instantly dim screen on start (still awake):
+
+\fImac_awake -d -s -u 3:30pm
+.SH AUTHOR
+Vladimir Herdman <vovaherdman@gmail.com>
