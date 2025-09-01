@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
 INSTALL_DIR="$HOME/.local/bin"
-PROJECT_NAME='mac-sleep'
+PROJECT_NAME='mac-later'
 SCRIPT_NAME='vh_later'
