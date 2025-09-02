@@ -10,6 +10,8 @@ Usage: vh_later [OPTIONS [VALUE]]
 
 Options:
   -h, --help                Show usage information for script
+  -d, --displayoff          Turn off display to save power, still awake
+  -s, --sleepafter          Once command finishes, enter sleep mode to save power
   -f, --for TIME            Stay awake for TIME duration
   -u, --until TIME [DATE]   Stay awake until TIME and DATE occurrs (DATE optional)
 
@@ -203,6 +205,9 @@ main() {
                 exit 0;;
 
             --displayoff | -d)
+                ;;
+
+            --sleepafter | -s)
                 ;;
 
             --for | -f)

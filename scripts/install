@@ -39,15 +39,15 @@ main() {
         if [[ "$current_shell" == *'zsh'* ]]; then
             printf "%s\n" "  * Adding path export to shell configuration file: $HOME/.zshrc"
             printf "%s%s" 'export PATH=$PATH:' "$INSTALL_DIR" >> "$HOME/.zshrc"
-            printf "%s%s" 'export PATH=$PATH:' "$HOME/.local/share/man" >> "$HOME/.zshrc"
+            printf "%s%s%a" 'export MANPATH=' "$HOME/.local/share/man" ':$MANPATH' >> "$HOME/.zshrc"
             printf "%s\n" "  * You may now call '$SCRIPT_NAME' to use this script, but open a new shell instance first"
         elif [[ "$current_shell" == *'bash'* ]]; then
             printf "%s\n" "  * Adding path export to shell configuration file: $HOME/.bashrc"
             printf "%s%s" 'export PATH=$PATH:' "$INSTALL_DIR" >> "$HOME/.bashrc"
-            printf "%s%s" 'export PATH=$PATH:' "$HOME/.local/share/man" >> "$HOME/.bashrc"
+            printf "%s%s%a" 'export MANPATH=' "$HOME/.local/share/man" ':$MANPATH' >> "$HOME/.bashrc"
             printf "%s\n" "  * You may now call '$SCRIPT_NAME' to use this script, but open a new shell instance first"
         else
-            printf "%s\n" "  * Add '$INSTALL_DIR' directory to shell PATH in order to use script"
+            printf "%s\n" "  * Add '$INSTALL_DIR' directory to shell PATH in order to use script, and $MAN_DIR to MANPATH for man usage"
         fi
     fi
 }
